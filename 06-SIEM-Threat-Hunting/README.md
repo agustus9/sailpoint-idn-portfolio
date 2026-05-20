@@ -1,75 +1,62 @@
-# 🔍 SIEM Engineering & Advanced Threat Hunting
+# 🔍 SIEM Threat Hunting & Identity Security Monitoring
 
 ## 📋 Scenario & Business Problem
-Identity ecosystems are a primary target for advanced persistent threats (APTs). A common attack vector involves compromising an administrative identity to quietly modify critical platform roles, or executing a "MFA fatigue" attack to bypass access controls. 
+Identity ecosystems are a primary target for advanced persistent threats (APTs). A common attack vector involves compromising an administrative identity to quietly modify critical platform roles, or executing an "MFA fatigue" push-notification spam attack to bypass standard access gates. 
 
-Without specialized security monitoring, these identity security incidents blend into normal audit logs. Security Operations Centers (SOC) require optimized correlation logic to instantly flag suspicious behavior, such as a user triggering an uncommon administrative role modification in SailPoint IIQ immediately followed by a high-risk cloud login from an anomalous geolocation in Entra ID.
+Without specialized security monitoring, these identity security incidents blend into thousands of normal audit records. Security Operations Centers (SOC) require optimized hunting queries to quickly isolate suspicious behavior—such as a sudden wave of denied multi-factor prompts or out-of-band administrative capability modifications—before an account takeover is finalized.
 
 ## 💡 Solution Architecture
-This project establishes high-fidelity detection rules written in **Kusto Query Language (KQL)**, **Splunk Search Processing Language (SPL)**, and **Ariel Query Language (AQL)**.
-1. **Behavioral Analytics:** Baselines normal administrative behavior to isolate anomalies.
-2. **Multi-Source Correlation:** Bridges on-premises SailPoint IdentityIQ audit trails with cloud-native Entra ID and Okta sign-in logs.
-3. **MFA Fatigue Detection:** Tracks rapid sequences of denied push notifications followed by a successful login.
-4. **Privilege Escalation Alerting:** Monitors the specific database tables or application logs tracking target group modifications.
+This project establishes high-fidelity, intermediate-level detection rules written in **Kusto Query Language (KQL)**, **Splunk Search Processing Language (SPL)**, and **Ariel Query Language (AQL)**.
+1. **Privilege Modification Monitoring:** Audits centralized log feeds for administrative changes like new capability assignments or added account roles.
+2. **MFA Fatigue Alerting:** Tracks rapid sequences of denied or failed push notifications on a per-user basis to catch user capitulation.
+3. **High-Risk Sign-In Tracking:** Flags account authentication anomalies coming from unexpected geographic locations or flagged risk levels.
 
 ## 🏗️ Technical Components
-* **Component Type:** SIEM Detection Rules & Correlation Logic
+* **Component Type:** SIEM Detection Rules & Threat Hunting Logic
 * **Query Standards:** Microsoft Sentinel KQL, Splunk SPL, IBM QRadar AQL
-* **Log Sources Evaluated:** SailPoint IIQ AuditLogs, MicrosoftEntraID SignInLogs, Okta Syslog
+* **Log Sources Evaluated:** Application Syslog Trails, MicrosoftEntraID SignInLogs, Okta Audit Syslog
 
 ---
 
-## 🛠️ Threat Hunting Rule Implementations
+## 🛠️ Intermediate Threat Hunting Queries
 
-### Implementation 1: Microsoft Sentinel (KQL) - Multi-Source Identity Escalation
-This rule detects a critical administrative role modification inside SailPoint IIQ immediately followed by a medium or high-risk cloud authentication event via Entra ID by the same user account within a tight 1-hour window.
+### Query 1: Microsoft Sentinel (KQL) - High-Risk Administrative Changes
+This query scans the system logs to identify instances where critical access changes, role additions, or capability updates are pushed, tracking which administrator initiated the action.
 
 ```kusto
-let HighRiskIdentityModifications = 
-    Syslog
+Syslog
 
-    | where ProcessName == "sailpoint.iiq"
-    | where Message contains "syslog:CapabilityAssignment" or Message contains "addRole"
-    | extend TargetUser = extract(@"targetIdentity=([^,\s]+)", 1, Message)
 
-    | extend AdminActor = extract(@"actor=([^,\s]+)", 1, Message)
-    | project TimeGenerated, AdminActor, TargetUser, Message;
-SigninLogs
+| where ProcessName == "identity.governance.engine" or Message contains "sailpoint"
+| where Message contains "CapabilityAssignment" or Message contains "addRole"
+| summarize EventCount = count() by Computer, HostIP, ProcessName, Message
 
-| where RiskLevelDuringSignIn in ("medium", "high")
-| join kind=inner (HighRiskIdentityModifications) on $left.UserPrincipalName == $right.TargetUser
-| where TimeGenerated between ((TimeGenerated1 - 1h) .. (TimeGenerated1 + 1h))
-
-| project TimeGenerated, UserPrincipalName, IPAddress, Location, AdminActor, Message
+| sort by EventCount desc
 ```
 
-### Implementation 2: Splunk (SPL) - Okta MFA Fatigue / Push Spam
-This correlation rule isolates scenarios where an identity rejects multiple continuous MFA push notifications within a 5-minute window but subsequently responds with a successful authentication, signaling user capitulation.
+### Query 2: Splunk (SPL) - Okta MFA Fatigue / Push Spam Detection
+This query isolates scenarios where a single user identity rejects multiple continuous multi-factor authentication (MFA) prompts within the log window, indicating an active push-notification spamming attempt.
 
 ```splunk
-index=security sourcetype="okta:system:log" 
-    (eventType="user.authentication.auth_via_mfa" AND displayMessage="REJECT") OR (eventType="user.authentication.auth_via_mfa" AND displayMessage="SUCCESS")
-| sort 0 + _time
-| streamwindow 5 current=true window=5m type=time global=false by actor.alternateId
-
-| stats count(eval(displayMessage="REJECT")) as RejectionCount, count(eval(displayMessage="SUCCESS")) as SuccessCount by actor.alternateId, client.ipAddress
-| where RejectionCount >= 3 AND SuccessCount == 1
-| eval Description="Potential MFA Fatigue attack successful. User rejected multiple pushes before capitulating."
+index=security sourcetype="okta:system:log" displayMessage="*MFA*REJECT*" OR displayMessage="*Authentication failed*"
+| stats count as FailureCount by actor.alternateId, client.ipAddress, displayMessage
+| where FailureCount >= 3
+| sort - FailureCount
 ```
 
-### Implementation 3: IBM QRadar (AQL) - Unauthorized Group Modification Logs
+### Query 3: IBM QRadar (AQL) - Unauthorized Group & Privilege Modifications
 This query monitors QRadar event logs for target environment modifications that signal lateral group changes or privilege tampering outside standard maintenance windows.
 
 ```aql
-SELECT Loganame(logsourceid) AS 'Log Source', username AS 'User', IdentityName AS 'Target Identity', EventName(eventid) AS 'Event', DATEFORMAT(starttime, 'yyyy-MM-dd HH:mm:ss') AS 'Time' 
-FROM events 
-WHERE (qid = 5000023 OR payload CONTAINS 'addMemberToRole' OR payload CONTAINS 'syslog:CapabilityAssignment') 
-START '2026-05-11 00:00:00' STOP '2026-05-18 23:59:59'
+SELECT username AS 'Admin User', IdentityName AS 'Target Identity', EventName(eventid) AS 'Action', DATEFORMAT(starttime, 'yyyy-MM-dd HH:mm:ss') AS 'Event Time'
+FROM events
+WHERE (payload CONTAINS 'addMemberToRole' OR payload CONTAINS 'CapabilityAssignment' OR payload CONTAINS 'addRole')
+ORDER BY starttime DESC
 ```
 
 ---
 
 ## 🚀 How to Import & Run
-1. Copy the query strings from the code blocks above or download them from `config/Identity-Threat-Detection-Rules.txt`.
-2. **For Azure/Sentinel:** Navigate to **Microsoft Sentinel** -> **Analytics** -> **Create scheduled query rule**, and paste the KQL logic.
-3. **For Splunk:** Paste the SPL logic into your Search bar or save it as an Alert with a throttling window of 1 hour to prevent alert fatigue.
+1. **For Azure/Sentinel:** Navigate to **Microsoft Sentinel** -> **Logs**, paste the KQL query, and select your desired time range to hunt for outliers.
+2. **For Splunk:** Paste the SPL query directly into the Search bar inside the **Search & Reporting** app window.
+3. **For QRadar:** Go to the **Log Activity** tab, select **Advanced Search** from the options bar, paste the AQL query, and hit search.
