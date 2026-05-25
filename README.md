@@ -41,6 +41,11 @@ An engineering sandbox documenting hands-on deployments, custom configurations, 
 *   **Objective:** Designing and deploying cloud-native identity profile mappings and declarative string manipulations using REST API orchestration.
 *   **Key Skills:** JSON Transforms, Postman Orchestration, SailPoint SaaS v3/Beta APIs, VS Code Integrations, OAuth 2.0 Token Automation.
 
+  ### [08. Advanced Access Governance, Forms Engine & App Porting](./08-Advanced-Governance-Forms)
+* **Objective:** Building interactive data-validation intake forms and orchestrating multi-tenant environment migrations using the Configuration Hub Deployer engine.
+* **Key Skills:** Forms Engine JSON, Configuration Hub Export/Import, Role Discovery, Tenant Environment Porting.
+
+
 ---
 ## 🎓 Certifications & Professional Alignment
 * **Certified Identity Governance Expert (CIGE)**
