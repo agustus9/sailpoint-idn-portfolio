@@ -1,0 +1,26 @@
+{
+  "schemas": [
+    "urn:ietf:params:scim:schemas:core:2.0:User",
+    "urn:ietf:params:scim:schemas:extension:cyberark:2.0:User"
+  ],
+  "userName": "svc_sailpoint_pam",
+  "name": {
+    "familyName": "Service",
+    "givenName": "SailPoint"
+  },
+  "emails": [
+    {
+      "value": "iam-admin@company.com",
+      "type": "work",
+      "primary": true
+    }
+  ],
+  "active": true,
+  "urn:ietf:params:scim:schemas:extension:cyberark:2.0:User": {
+    "userType": "EPVUser",
+    "vaultGroups": [
+      "Vault Admins",
+      "CPM-Safe-Managers"
+   ]
+  }
+}
