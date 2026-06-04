@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule name="CyberArk Safe Certification Rule" type="CertificationSignOff">
+  <Description>Custom rule to evaluate and flag high-risk CyberArk Safe permissions during certification.</Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.CertificationItem;
+    import sailpoint.object.Certification;
+    import java.util.List;
+
+    // 'item' is provided by the SailPoint certification engine context
+    if (item != null) {
+        String entitlementName = item.getExceptionEntitlementName();
+        
+        // Flag root or admin safes for additional reviewer scrutiny
+        if (entitlementName != null && entitlementName.contains("Master-Safe")) {
+            item.setAttribute("highRiskPrivilege", "true");
+            item.setSummaryStatus("Requires Executive Approval");
+        }
+    }
+    return;
+    ]]>
+  </Source>
+</Rule>
