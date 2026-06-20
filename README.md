@@ -68,16 +68,16 @@ A hands-on engineering repository containing deployments, configuration files, a
 ---
 
 ## About Me
-I am an Identity Security Engineer specializing in **Identity Governance & Administration (IGA)**, **Privileged Access Management (PAM)**, and **Access Management**. 
+I am a **Senior IAM Architect & Governance Engineer** with over 15 years of comprehensive IT and Cybersecurity experience across high-governance, highly regulated sectors (including Financial Services, Federal/Defense Aerospace, and Healthcare Payers). 
 
-I focus on connecting enterprise target platforms with modern cloud access solutions by building automated lifecycle controls, secure vault integration, federation strategies, and identity-centric threat hunting logic.
+My architectural focus centers on stitching legacy infrastructure with modern cloud architectures. I build secure identity perimeter controls through automated lifecycle administration (IGA), hardened privileged access isolation pipelines (PAM), single sign-on federation, and pro-active identity threat hunting telemetry.
 
 ### Core Tech Stack
-* **IGA Engine:** SailPoint IdentityIQ (BeanShell Rules, XML Workflows) & SailPoint Identity Security Cloud (ISC)
-* **PAM Security:** CyberArk PAM (Enterprise Password Vault, CPM, PVWA, PSM)
-* **Access & AM:** Microsoft Entra ID (PIM, Conditional Access), Okta (LCM, SAML 2.0, SCIM)
-* **SIEM & SecOps:** Splunk (SPL), Microsoft Sentinel (KQL), IBM QRadar (AQL)
+* **IGA Platform:** SailPoint IdentityIQ (BeanShell Rules, XML Workflows) & SailPoint Identity Security Cloud (ISC)
+* **PAM Architecture:** CyberArk PAM (Enterprise Password Vault, CPM, PVWA, PSM Session Recording)
+* **Access Federation:** Microsoft Entra ID (PIM, Conditional Access), Okta (LCM, SAML 2.0, SCIM Engine)
+* **SecOps Telemetry:** Splunk (SPL), Microsoft Sentinel (KQL), IBM QRadar (AQL)
 
-### Connect with me
+### Professional Connection
 * **LinkedIn:** [Arthur M. on LinkedIn](https://linkedin.com)
 * **Email:** [arthur366q@gmail.com](mailto:arthur366q@gmail.com)
